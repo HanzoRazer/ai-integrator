@@ -169,9 +169,15 @@ class AIIntegrator:
         """
         tasks = {}
         for provider_name, config in providers_config.items():
-            model = config.pop("model")
+            # Get model without modifying original config
+            model = config.get("model")
+            if not model:
+                raise ValueError(f"Model not specified for provider '{provider_name}'")
+
+            # Create a copy of config without 'model' key
+            config_copy = {k: v for k, v in config.items() if k != "model"}
             tasks[provider_name] = self.generate(
-                prompt=prompt, model=model, provider=provider_name, **config
+                prompt=prompt, model=model, provider=provider_name, **config_copy
             )
 
         results = await asyncio.gather(*tasks.values(), return_exceptions=True)

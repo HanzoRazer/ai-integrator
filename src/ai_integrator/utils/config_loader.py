@@ -22,6 +22,7 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
 
     Example:
         >>> config = load_config("config.yaml")
+        >>> # Returns: {'providers': {'openai': {...}}, 'timeout': 30}
         >>> config = load_config()  # Uses AI_INTEGRATOR_CONFIG env var
     """
     if config_path is None:

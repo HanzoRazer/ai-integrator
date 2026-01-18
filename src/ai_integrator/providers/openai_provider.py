@@ -53,7 +53,7 @@ class OpenAIProvider(BaseProvider):
                 from openai import AsyncOpenAI
             except ImportError:
                 raise ImportError(
-                    "OpenAI package not installed. " "Install it with: pip install openai"
+                    "OpenAI package not installed. Install it with: pip install openai"
                 )
 
             self._client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
