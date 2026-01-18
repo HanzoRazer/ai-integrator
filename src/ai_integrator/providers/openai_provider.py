@@ -111,11 +111,22 @@ class OpenAIProvider(BaseProvider):
             )
 
         except Exception as e:
+            # Try to catch specific OpenAI exception types if available
+            exc_type = type(e).__name__
+
+            # Check exception type name for better error detection
+            if "AuthenticationError" in exc_type or "Unauthorized" in exc_type:
+                raise AuthenticationError(f"OpenAI authentication failed: {e}")
+            elif "RateLimitError" in exc_type or "rate_limit" in exc_type.lower():
+                raise RateLimitError(f"OpenAI rate limit exceeded: {e}")
+
+            # Fallback to string matching for other error types
             error_msg = str(e).lower()
             if "authentication" in error_msg or "api key" in error_msg:
                 raise AuthenticationError(f"OpenAI authentication failed: {e}")
             elif "rate limit" in error_msg:
                 raise RateLimitError(f"OpenAI rate limit exceeded: {e}")
+
             raise
 
     def get_available_models(self) -> List[str]:
