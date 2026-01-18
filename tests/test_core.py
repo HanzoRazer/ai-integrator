@@ -11,14 +11,11 @@ async def test_basic_integration():
     """Test basic integration with mock provider."""
     integrator = AIIntegrator()
     mock_provider = MockProvider()
-    
+
     integrator.add_provider("mock", mock_provider)
-    
-    response = await integrator.generate(
-        prompt="Hello, AI!",
-        model="mock-small"
-    )
-    
+
+    response = await integrator.generate(prompt="Hello, AI!", model="mock-small")
+
     assert response is not None
     assert response.text is not None
     assert response.provider == "Mock Provider"
@@ -29,10 +26,10 @@ async def test_basic_integration():
 async def test_multiple_providers():
     """Test managing multiple providers."""
     integrator = AIIntegrator()
-    
+
     integrator.add_provider("mock1", MockProvider())
     integrator.add_provider("mock2", MockProvider())
-    
+
     providers = integrator.list_providers()
     assert len(providers) == 2
     assert "mock1" in providers
@@ -45,17 +42,14 @@ async def test_default_provider():
     integrator = AIIntegrator()
     mock1 = MockProvider()
     mock2 = MockProvider()
-    
+
     integrator.add_provider("mock1", mock1)
     integrator.add_provider("mock2", mock2)
-    
+
     integrator.set_default_provider("mock2")
-    
-    response = await integrator.generate(
-        prompt="Test",
-        model="mock-small"
-    )
-    
+
+    response = await integrator.generate(prompt="Test", model="mock-small")
+
     # Should use mock2 as default
     assert response.provider == "Mock Provider"
 
@@ -65,12 +59,9 @@ async def test_invalid_model():
     """Test error handling for invalid model."""
     integrator = AIIntegrator()
     integrator.add_provider("mock", MockProvider())
-    
+
     with pytest.raises(ModelNotFoundError):
-        await integrator.generate(
-            prompt="Test",
-            model="nonexistent-model"
-        )
+        await integrator.generate(prompt="Test", model="nonexistent-model")
 
 
 @pytest.mark.asyncio
@@ -78,11 +69,11 @@ async def test_remove_provider():
     """Test removing a provider."""
     integrator = AIIntegrator()
     integrator.add_provider("mock", MockProvider())
-    
+
     assert len(integrator.providers) == 1
-    
+
     integrator.remove_provider("mock")
-    
+
     assert len(integrator.providers) == 0
 
 
@@ -92,15 +83,12 @@ async def test_parallel_generation():
     integrator = AIIntegrator()
     integrator.add_provider("mock1", MockProvider())
     integrator.add_provider("mock2", MockProvider())
-    
+
     responses = await integrator.generate_parallel(
         prompt="Explain quantum computing",
-        providers_config={
-            "mock1": {"model": "mock-small"},
-            "mock2": {"model": "mock-large"}
-        }
+        providers_config={"mock1": {"model": "mock-small"}, "mock2": {"model": "mock-large"}},
     )
-    
+
     assert len(responses) == 2
     assert "mock1" in responses
     assert "mock2" in responses
@@ -109,7 +97,7 @@ async def test_parallel_generation():
 def test_provider_validation():
     """Test provider model validation."""
     provider = MockProvider()
-    
+
     assert provider.validate_model("mock-small") is True
     assert provider.validate_model("invalid-model") is False
 
@@ -117,11 +105,7 @@ def test_provider_validation():
 def test_response_str():
     """Test AIResponse string representation."""
     from ai_integrator.core.base import AIResponse
-    
-    response = AIResponse(
-        text="Test response",
-        model="test-model",
-        provider="test-provider"
-    )
-    
+
+    response = AIResponse(text="Test response", model="test-model", provider="test-provider")
+
     assert str(response) == "Test response"
