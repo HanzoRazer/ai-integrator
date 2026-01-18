@@ -1,0 +1,8 @@
+include src/ai_integrator/py.typed
+recursive-include src/ai_integrator *.py
+include README.md
+include LICENSE
+include requirements.txt
+include requirements-dev.txt
+recursive-include docs *.md
+recursive-include examples *.py
