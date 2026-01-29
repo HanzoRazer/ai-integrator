@@ -89,6 +89,75 @@ This document synthesizes systems-engineering analysis across the ai-integrator 
 
 ---
 
+## Authority Boundaries (Normative)
+
+These boundaries are **non-negotiable architectural constraints**.
+
+### ai-integrator Scope
+
+```
+ai-integrator PROVIDES:
+├── Design parameters (visual/aesthetic choices)
+├── Image generation requests (to luthiers-toolbox)
+├── Text generation for design coaching
+└── Cost/usage tracking
+
+ai-integrator does NOT PROVIDE:
+├── Domain reasoning for sg-* functions
+├── Domain reasoning for RMOS functions
+├── Build decisions (that's RMOS)
+└── Smart Guitar function governance (that's sg-engine)
+```
+
+**Key principle**: ai-integrator is a **parameter provider**. It suggests design choices. It does NOT make domain decisions.
+
+### RMOS Authority
+
+```
+RMOS:
+├── DESIGNS the Smart Guitar build
+├── ACCEPTS or REJECTS ai-integrator parameters
+├── Has PRIMACY over sg-engine in any interaction
+└── Has NO governance over Smart Guitar functions themselves
+
+sg-engine:
+├── GOVERNS Smart Guitar function application
+├── DEFERS to RMOS on build decisions
+└── CALLS ai-integrator for design coaching
+```
+
+**Key principle**: When RMOS and sg-engine interact, **RMOS has primacy**. RMOS designs builds; sg-engine governs function execution.
+
+### Authority Flow Diagram
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                       AUTHORITY BOUNDARIES                        │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ai-integrator                                                   │
+│  └── Scope: Design parameters ONLY                               │
+│      └── "Here are aesthetic options" (advisory)                 │
+│                    │                                             │
+│                    ▼                                             │
+│  RMOS (luthiers-toolbox)                                         │
+│  └── Authority: Accept/Reject parameters                         │
+│  └── Scope: Build design decisions                               │
+│  └── PRIMACY over sg-engine                                      │
+│      └── "This is the build specification" (authoritative)       │
+│                    │                                             │
+│                    ▼                                             │
+│  sg-engine                                                       │
+│  └── Authority: Smart Guitar function governance                 │
+│  └── Scope: Function execution rules                             │
+│  └── DEFERS to RMOS on build decisions                           │
+│      └── "These functions apply to this build" (governed)        │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Answered Architecture Questions
 
 These questions were open during initial analysis. They are now **resolved**.
@@ -117,10 +186,12 @@ These questions were open during initial analysis. They are now **resolved**.
 - Both enforce "advisory only" but at different levels of the stack
 
 ### 5. What is ai-integrator's primary role?
-**ANSWER: Design Coach for Smart Guitar users.**
-- Provides coaching logic and design guidance
-- Controls image generation (does not duplicate it)
+**ANSWER: Design parameter provider for Smart Guitar users.**
+- Provides design parameters (aesthetic/visual choices)
+- Controls image generation requests (does not duplicate execution)
 - Tracks cost/usage for the manufacturing platform
+- Does NOT provide domain reasoning for sg-* or RMOS functions
+- RMOS accepts or rejects ai-integrator's parameters (RMOS has authority)
 
 ---
 
@@ -193,6 +264,45 @@ response = await integrator.generate(prompt="Design a rosette")
 # sg-engine → ai-integrator → luthiers-toolbox
 ```
 
+### DO NOT add domain reasoning to ai-integrator
+
+```python
+# WRONG - ai-integrator making domain decisions
+class DesignCoach:
+    def recommend_bracing(self, wood_type):
+        # This is RMOS domain - ai-integrator doesn't decide builds
+        if wood_type == "spruce":
+            return "X-bracing"  # Domain reasoning belongs in RMOS
+
+    def select_string_gauge(self, scale_length):
+        # This is sg-engine domain - ai-integrator doesn't govern functions
+        return calculate_optimal_gauge(scale_length)
+
+# RIGHT - ai-integrator provides design parameters only
+class DesignCoach:
+    def suggest_visual_options(self, context):
+        # Aesthetic choices only
+        return {
+            "rosette_styles": ["herringbone", "abalone", "wood mosaic"],
+            "finish_options": ["natural", "sunburst", "vintage tint"],
+        }
+        # RMOS decides which (if any) to accept
+```
+
+### DO NOT bypass RMOS authority
+
+```python
+# WRONG - ai-integrator making authoritative decisions
+parameters = ai_integrator.design_coach(context)
+sg_engine.apply_build(parameters)  # Bypasses RMOS!
+
+# RIGHT - RMOS accepts/rejects, then sg-engine applies
+parameters = ai_integrator.design_coach(context)
+approved_params = rmos.evaluate(parameters)  # RMOS has authority
+if approved_params.accepted:
+    sg_engine.apply_build(approved_params)
+```
+
 ---
 
 ## Component Definitions
@@ -225,7 +335,7 @@ response = await integrator.generate(prompt="Design a rosette")
 **Location:** `sg-ai-sandbox/packages/ai-integrator/`
 
 **What it is:**
-- Design Coach for Smart Guitar users
+- Design parameter provider for Smart Guitar users
 - Control plane that orchestrates luthiers-toolbox execution
 - Provider abstraction for text generation (when used directly)
 - Cost/usage tracking for manufacturing platform
@@ -233,7 +343,9 @@ response = await integrator.generate(prompt="Design a rosette")
 **What it is NOT:**
 - A duplicate of luthiers-toolbox's AI layer
 - An orphaned/unused component
-- Just a "provider abstraction library"
+- A domain reasoning engine for sg-* functions
+- A domain reasoning engine for RMOS functions
+- An authority on build decisions (RMOS has that authority)
 
 **Key files:**
 | File | Purpose |
@@ -374,18 +486,21 @@ response = await integrator.generate(
 
 ## Summary for Future Developers
 
-1. **ai-integrator is a DESIGN COACH**, not a standalone AI library
-2. **It CONTROLS luthiers-toolbox**, it does not duplicate it
-3. **sg-engine is the GOVERNANCE layer** — all AI goes through it
-4. **ai-sandbox is STAGING** — sort out issues here before production
-5. **The destination is sg-ai** — sg-engine moves there when ready
+1. **ai-integrator provides DESIGN PARAMETERS**, not domain reasoning
+2. **It CONTROLS luthiers-toolbox execution**, it does not duplicate it
+3. **RMOS has AUTHORITY** — it accepts or rejects ai-integrator parameters
+4. **RMOS has PRIMACY** over sg-engine in any interaction
+5. **sg-engine GOVERNS Smart Guitar functions** — not build decisions
+6. **ai-sandbox is STAGING** — sort out issues here before production
+7. **The destination is sg-ai** — sg-engine moves there when ready
 
-When in doubt, ask: "Am I duplicating execution, or controlling it?"
-
-If you're duplicating → STOP and reconsider.
-If you're controlling → You're on the right path.
+When in doubt, ask:
+- "Am I duplicating execution, or controlling it?" → If duplicating, STOP.
+- "Am I adding domain reasoning to ai-integrator?" → If yes, STOP. That belongs in RMOS or sg-engine.
+- "Am I bypassing RMOS authority?" → If yes, STOP. RMOS accepts/rejects.
 
 ---
 
 *Last updated: 2026-01-29*
 *Architecture verified against actual codebase state*
+*Authority boundaries established per systems engineering review*
