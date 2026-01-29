@@ -6,11 +6,18 @@ from typing import Dict, Any, Optional
 
 @dataclass
 class ProviderConfig:
-    """Configuration for a single AI provider."""
+    """Configuration for a single AI provider.
+    
+    Supports both network providers (requiring api_key) and local/offline 
+    providers (requiring model_path). Use the parameters dict for 
+    provider-specific fields.
+    """
 
-    api_key: str
+    api_key: str = ""  # Optional for local providers
     default_model: Optional[str] = None
     base_url: Optional[str] = None
+    model_path: Optional[str] = None  # For local/offline providers
+    device: Optional[str] = None  # For local providers: "cpu", "cuda", "mps"
     parameters: Dict[str, Any] = field(default_factory=dict)
 
 
