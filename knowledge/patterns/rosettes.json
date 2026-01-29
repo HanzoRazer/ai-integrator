@@ -1,0 +1,475 @@
+{
+  "patterns": [
+    {
+      "id": "classic_rope_5x9",
+      "name": "Classic Rope 5x9",
+      "category": "basic",
+      "rows": 5,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 9.0,
+        "height_mm": 4.2,
+        "chip_length_mm": 2.0,
+        "row_count": 5,
+        "column_count": 9
+      },
+      "notes": "Traditional Spanish rope pattern from craftsman video"
+    },
+    {
+      "id": "simple_rope_3x5",
+      "name": "Simple Rope 3x5",
+      "category": "basic",
+      "rows": 3,
+      "columns": 5,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 6.0,
+        "height_mm": 3.0,
+        "chip_length_mm": 2.0,
+        "row_count": 3,
+        "column_count": 5
+      },
+      "notes": "Simplified rope pattern for beginners"
+    },
+    {
+      "id": "diagonal_stripe_4x7",
+      "name": "Diagonal Stripe 4x7",
+      "category": "basic",
+      "rows": 4,
+      "columns": 7,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.0,
+        "height_mm": 2.5,
+        "chip_length_mm": 2.0,
+        "row_count": 4,
+        "column_count": 7
+      },
+      "notes": "Creates diagonal stripe effect"
+    },
+    {
+      "id": "chevron_5x7",
+      "name": "Chevron 5x7",
+      "category": "basic",
+      "rows": 5,
+      "columns": 7,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 5.6000000000000005,
+        "height_mm": 3.0,
+        "chip_length_mm": 2.0,
+        "row_count": 5,
+        "column_count": 7
+      },
+      "notes": "V-shaped chevron pattern"
+    },
+    {
+      "id": "torres_simple_rope_4x7",
+      "name": "Torres Simple Rope",
+      "category": "torres",
+      "rows": 4,
+      "columns": 7,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 5.6000000000000005,
+        "height_mm": 3.0,
+        "chip_length_mm": 1.5,
+        "row_count": 4,
+        "column_count": 7
+      },
+      "notes": "Torres-style simple rope, symmetric pattern. Common on his later instruments."
+    },
+    {
+      "id": "torres_ladder_6x9",
+      "name": "Torres Ladder Pattern",
+      "category": "torres",
+      "rows": 6,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 6.3,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.8,
+        "row_count": 6,
+        "column_count": 9
+      },
+      "notes": "Torres ladder/staircase pattern. Creates diagonal stepping effect."
+    },
+    {
+      "id": "torres_wave_5x11",
+      "name": "Torres Wave Pattern",
+      "category": "torres",
+      "rows": 5,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 8.8,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.6,
+        "row_count": 5,
+        "column_count": 11
+      },
+      "notes": "Torres wave/undulating pattern. Creates flowing visual movement."
+    },
+    {
+      "id": "torres_diamond_7x9",
+      "name": "Torres Diamond Mosaic",
+      "category": "torres",
+      "rows": 7,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 5.3999999999999995,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.5,
+        "row_count": 7,
+        "column_count": 9
+      },
+      "notes": "Torres diamond/lozenge pattern. Classic Spanish mosaic style."
+    },
+    {
+      "id": "hauser_rope_6x11",
+      "name": "Hauser Classic Rope",
+      "category": "hauser",
+      "rows": 6,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.699999999999999,
+        "height_mm": 4.0,
+        "chip_length_mm": 1.8,
+        "row_count": 6,
+        "column_count": 11
+      },
+      "notes": "Hauser-style rope pattern. Refined German precision, symmetric."
+    },
+    {
+      "id": "hauser_herringbone_8x13",
+      "name": "Hauser Herringbone",
+      "category": "hauser",
+      "rows": 8,
+      "columns": 13,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.8,
+        "height_mm": 3.2,
+        "chip_length_mm": 1.5,
+        "row_count": 8,
+        "column_count": 13
+      },
+      "notes": "Hauser herringbone variation. High contrast diagonal effect."
+    },
+    {
+      "id": "hauser_segovia_7x11",
+      "name": "Hauser Segovia Model",
+      "category": "hauser",
+      "rows": 7,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.15,
+        "height_mm": 4.0,
+        "chip_length_mm": 1.6,
+        "row_count": 7,
+        "column_count": 11
+      },
+      "notes": "Pattern style used on Hauser guitars made for Andrés Segovia."
+    },
+    {
+      "id": "romanillos_rope_5x9",
+      "name": "Romanillos Rope",
+      "category": "romanillos",
+      "rows": 5,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.2,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.8,
+        "row_count": 5,
+        "column_count": 9
+      },
+      "notes": "Romanillos-style rope. Clean, balanced Spanish tradition."
+    },
+    {
+      "id": "romanillos_mosaic_6x11",
+      "name": "Romanillos Mosaic",
+      "category": "romanillos",
+      "rows": 6,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.699999999999999,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.6,
+        "row_count": 6,
+        "column_count": 11
+      },
+      "notes": "Romanillos mosaic pattern. Elegant Spanish-British fusion."
+    },
+    {
+      "id": "fleta_rope_6x9",
+      "name": "Fleta Barcelona Rope",
+      "category": "fleta",
+      "rows": 6,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 6.75,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.7,
+        "row_count": 6,
+        "column_count": 9
+      },
+      "notes": "Fleta-style rope pattern. Bold, high-contrast Barcelona tradition."
+    },
+    {
+      "id": "fleta_wave_7x11",
+      "name": "Fleta Wave",
+      "category": "fleta",
+      "rows": 7,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.699999999999999,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.6,
+        "row_count": 7,
+        "column_count": 11
+      },
+      "notes": "Fleta wave pattern. Dramatic visual flow."
+    },
+    {
+      "id": "bouchet_french_rope_5x9",
+      "name": "Bouchet French Rope",
+      "category": "bouchet",
+      "rows": 5,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.6499999999999995,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.8,
+        "row_count": 5,
+        "column_count": 9
+      },
+      "notes": "Bouchet-style rope. Refined French elegance, subtle contrast."
+    },
+    {
+      "id": "bouchet_mosaic_6x11",
+      "name": "Bouchet Mosaic",
+      "category": "bouchet",
+      "rows": 6,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 8.25,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.7,
+        "row_count": 6,
+        "column_count": 11
+      },
+      "notes": "Bouchet mosaic pattern. Lighter, airy French aesthetic."
+    },
+    {
+      "id": "simplicio_ornate_8x13",
+      "name": "Simplicio Ornate",
+      "category": "simplicio",
+      "rows": 8,
+      "columns": 13,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.8,
+        "height_mm": 3.6,
+        "chip_length_mm": 1.4,
+        "row_count": 8,
+        "column_count": 13
+      },
+      "notes": "Simplicio ornate pattern. Complex, decorative Barcelona style."
+    },
+    {
+      "id": "simplicio_zigzag_6x11",
+      "name": "Simplicio Zigzag",
+      "category": "simplicio",
+      "rows": 6,
+      "columns": 11,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.699999999999999,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.6,
+        "row_count": 6,
+        "column_count": 11
+      },
+      "notes": "Simplicio zigzag pattern. Bold angular design."
+    },
+    {
+      "id": "modern_minimalist_3x5",
+      "name": "Modern Minimalist",
+      "category": "modern",
+      "rows": 3,
+      "columns": 5,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 5.0,
+        "height_mm": 3.0,
+        "chip_length_mm": 2.0,
+        "row_count": 3,
+        "column_count": 5
+      },
+      "notes": "Contemporary minimalist design. Clean, simple, modern aesthetic."
+    },
+    {
+      "id": "modern_bold_4x7",
+      "name": "Modern Bold Stripe",
+      "category": "modern",
+      "rows": 4,
+      "columns": 7,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 8.4,
+        "height_mm": 3.5999999999999996,
+        "chip_length_mm": 2.2,
+        "row_count": 4,
+        "column_count": 7
+      },
+      "notes": "Modern bold stripe. High contrast contemporary look."
+    },
+    {
+      "id": "modern_asymmetric_5x8",
+      "name": "Modern Asymmetric",
+      "category": "modern",
+      "rows": 5,
+      "columns": 8,
+      "materials": [
+        "black",
+        "white"
+      ],
+      "dimensions": {
+        "width_mm": 7.2,
+        "height_mm": 3.0,
+        "chip_length_mm": 1.8,
+        "row_count": 5,
+        "column_count": 8
+      },
+      "notes": "Contemporary asymmetric gradient. Non-traditional, artistic."
+    },
+    {
+      "id": "tricolor_spanish_6x9",
+      "name": "Tricolor Spanish",
+      "category": "tricolor",
+      "rows": 6,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white",
+        "brown"
+      ],
+      "dimensions": {
+        "width_mm": 6.3,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.6,
+        "row_count": 6,
+        "column_count": 9
+      },
+      "notes": "Three-color Spanish pattern. Ebony, maple, rosewood combination."
+    },
+    {
+      "id": "tricolor_gradient_5x9",
+      "name": "Tricolor Gradient",
+      "category": "tricolor",
+      "rows": 5,
+      "columns": 9,
+      "materials": [
+        "black",
+        "white",
+        "brown"
+      ],
+      "dimensions": {
+        "width_mm": 6.75,
+        "height_mm": 3.5,
+        "chip_length_mm": 1.7,
+        "row_count": 5,
+        "column_count": 9
+      },
+      "notes": "Three-color gradient. Transitions dark to light to medium."
+    }
+  ],
+  "count": 24,
+  "source": "C:\\Users\\thepr\\Downloads\\luthiers-toolbox\\services\\api\\app\\data\\rosette_pattern_catalog.json",
+  "categories": [
+    "basic",
+    "torres",
+    "hauser",
+    "romanillos",
+    "fleta",
+    "bouchet",
+    "simplicio",
+    "modern",
+    "tricolor"
+  ]
+}

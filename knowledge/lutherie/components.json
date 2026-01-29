@@ -1,0 +1,34 @@
+{
+  "hardware": [
+    "vintage tuners",
+    "locking tuners",
+    "hardtail bridge",
+    "tremolo bridge",
+    "humbuckers",
+    "single coils",
+    "p90 pickups"
+  ],
+  "inlays": [
+    "dots",
+    "blocks",
+    "trapezoids",
+    "custom inlay"
+  ],
+  "body_shapes": [
+    "dreadnought",
+    "grand auditorium",
+    "parlor",
+    "jumbo",
+    "concert",
+    "les paul",
+    "stratocaster",
+    "telecaster",
+    "sg",
+    "jazzmaster",
+    "semi-hollow",
+    "archtop",
+    "classical",
+    "bass"
+  ],
+  "source": "C:\\Users\\thepr\\Downloads\\luthiers-toolbox\\services\\api\\app\\vision\\vocabulary.py"
+}

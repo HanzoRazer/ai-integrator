@@ -1,0 +1,12 @@
+{
+  "photography_styles": [
+    "product",
+    "dramatic",
+    "studio",
+    "lifestyle",
+    "vintage",
+    "cinematic",
+    "workshop"
+  ],
+  "source": "C:\\Users\\thepr\\Downloads\\luthiers-toolbox\\services\\api\\app\\vision\\vocabulary.py"
+}

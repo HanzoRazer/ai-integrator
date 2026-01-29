@@ -23,32 +23,37 @@ AI Integrator is a **provider-agnostic execution substrate** within a governed A
 
 **Boundary rule:** Do not add governance logic, job envelopes, or policy enforcement here. That belongs in `sg-engine`. This repo provides *untrusted capability* that higher layers validate.
 
-## Current Status: ORPHANED
+## Current Status: INTEGRATION READY
 
-**⚠️ IMPORTANT: This repo is currently not imported by any production system.**
+**ai-integrator now has complete image generation support for luthiers-toolbox integration.**
 
-| Component | Expected Role | Actual State |
-|-----------|--------------|--------------|
-| ai-integrator | Provider abstraction | Orphaned - not imported anywhere |
-| sg-engine | Governed AI executor | Rules-based only - no AI calls yet |
-| luthiers-toolbox AI | Platform transport | **Active** - OpenAI, Anthropic, Ollama |
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Text generation | ✅ Ready | `AIIntegrator.generate()`, parallel execution |
+| Image generation | ✅ Ready | `AIIntegrator.generate_image()`, `ImageCoach` |
+| Toolbox adapter | ✅ Ready | `ToolboxImageProvider` controls luthiers-toolbox |
+| Provenance | ✅ Ready | Audit trails on every request |
 
-**Active AI transport lives in:** `luthiers-toolbox/services/api/app/ai/transport/`
-- `llm_client.py` - OpenAI, Anthropic, Local (Ollama at localhost:11434)
-- `image_client.py` - Image generation
-- Already has safety/, cost/, observability/ layers
-
-**This repo's future depends on strategic decisions** (see docs/TECHNICAL_GUIDANCE_SUMMARY.md)
+**Pending:** luthiers-toolbox endpoint (`/api/ai/image/generate`) to receive requests.
 
 ## Architecture
 
-**Core pattern:** `AIIntegrator` → `BaseProvider` → External/Local APIs
+### Text Generation
+**Pattern:** `AIIntegrator` → `BaseProvider` → External/Local APIs
 
 - [core/integrator.py](../src/ai_integrator/core/integrator.py) - Orchestrator, provider registry, parallel execution
-- [core/base.py](../src/ai_integrator/core/base.py) - `BaseProvider` ABC, `AIRequest`/`AIResponse` dataclasses, exception hierarchy
-- [providers/](../src/ai_integrator/providers/) - Concrete implementations (`MockProvider` for tests, `OpenAIProvider` as reference)
+- [core/base.py](../src/ai_integrator/core/base.py) - `BaseProvider` ABC, `AIRequest`/`AIResponse` dataclasses
+- [providers/](../src/ai_integrator/providers/) - `MockProvider`, `OpenAIProvider`, `OllamaProvider`
 
-## Adding Providers
+### Image Generation
+**Pattern:** `AIIntegrator` → `ImageCoach` → `BaseImageProvider` → luthiers-toolbox
+
+- [core/image_types.py](../src/ai_integrator/core/image_types.py) - `ImageRequest`, `ImageResponse`, `ImageSize`, `ImageStyle`
+- [providers/base_image_provider.py](../src/ai_integrator/providers/base_image_provider.py) - `BaseImageProvider` ABC
+- [providers/toolbox_image_provider.py](../src/ai_integrator/providers/toolbox_image_provider.py) - HTTP adapter to luthiers-toolbox
+- [coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py) - Guitar-specific prompt engineering
+
+## Adding Text Providers
 
 Extend `BaseProvider` and implement:
 ```python
@@ -57,34 +62,63 @@ def get_available_models(self) -> List[str]
 @property def provider_name(self) -> str
 ```
 
-**Required patterns** (see [openai_provider.py](../src/ai_integrator/providers/openai_provider.py)):
+## Adding Image Providers
+
+Extend `BaseImageProvider` and implement:
+```python
+async def generate_image(self, request: ImageRequest) -> ImageResponse
+def get_available_models(self) -> List[str]
+@property def provider_name(self) -> str
+```
+
+**Required patterns:**
 - Lazy client init via `_get_client()` for optional dependencies
 - `AVAILABLE_MODELS` class constant for validation
-- Map errors to `AuthenticationError`, `RateLimitError`, `ModelNotFoundError`
-- Register exports in [providers/__init__.py](../src/ai_integrator/providers/__init__.py)
+- Map errors to `ImageGenerationError`, `ContentPolicyError`, `ImageQuotaError`
+- Include provenance in response metadata
 
-**Offline-first:** Local providers may not require `api_key`—use `ProviderConfig.parameters` for provider-specific fields like `model_path`, `device`.
+## Image Coach Usage
+
+```python
+from ai_integrator import ImageCoach, DesignContext, GuitarComponent, WoodType
+
+coach = ImageCoach()
+context = DesignContext(
+    guitar_type="classical",
+    component=GuitarComponent.ROSETTE,
+    wood_type=WoodType.SPRUCE,
+)
+request = coach.create_image_request(context, num_variations=4)
+# request.prompt is now optimized for guitar imagery
+```
 
 ## Exception Hierarchy
 
 ```
 ProviderError (base)
-├── AuthenticationError  # Invalid credentials
-├── RateLimitError       # Throttling
-└── ModelNotFoundError   # Unknown model
+├── AuthenticationError    # Invalid credentials
+├── RateLimitError         # Throttling
+├── ModelNotFoundError     # Unknown model
+└── ImageProviderError
+    ├── ImageGenerationError  # Generation failed
+    ├── ContentPolicyError    # Safety violation
+    └── ImageQuotaError       # Quota exceeded
 ```
-
-Always raise specific exceptions, never generic `Exception`.
 
 ## Testing
 
-Use `MockProvider` (no API keys, tracks `call_count`):
+Use `MockProvider` for text and `MockImageProvider` for images:
 ```python
+# Text generation
 integrator.add_provider("mock", MockProvider())
 response = await integrator.generate(prompt="test", model="mock-small")
+
+# Image generation
+integrator.add_image_provider("mock", MockImageProvider())
+response = await integrator.generate_image(prompt="guitar rosette")
 ```
 
-Run: `pytest` (pytest-asyncio handles async tests)
+Run: `pytest` (152 tests, pytest-asyncio handles async)
 
 ## Code Style
 
@@ -95,41 +129,57 @@ Run: `pytest` (pytest-asyncio handles async tests)
 
 ## Critical Design Notes
 
-1. **Async-first:** All `generate()` methods are async—always `await`
-2. **First provider = default:** Override with `set_default_provider()`
-3. **`generate_parallel()` returns exceptions as values** when using `return_exceptions=True`—callers must type-check results
-4. **Config fields like `cache_enabled`, `timeout`, `max_retries`** exist in Settings but require explicit enforcement in providers
-5. **Public API:** Only exports in [\_\_init\_\_.py](../src/ai_integrator/__init__.py) are stable; internal modules may change
+1. **Async-first:** All `generate()` and `generate_image()` methods are async—always `await`
+2. **First provider = default:** Override with `set_default_provider()` or `set_default_image_provider()`
+3. **Parallel methods return exceptions as values**—callers must type-check results
+4. **Provenance tracking:** Use `create_provenance()` and attach to response metadata
+5. **ImageCoach provides PARAMETERS only:** RMOS accepts/rejects design suggestions
 
-## New Scaffolding (Landing Pads)
-
-These modules provide foundations for identified improvements:
+## Key Modules
 
 | Module | Purpose |
 |--------|---------|
-| [core/validation.py](../src/ai_integrator/core/validation.py) | Config validation with actionable error messages |
-| [core/provenance.py](../src/ai_integrator/core/provenance.py) | Provenance envelopes for RMOS/governance compatibility |
-| [providers/local_provider.py](../src/ai_integrator/providers/local_provider.py) | Offline model base class + Ollama implementation |
+| [core/integrator.py](../src/ai_integrator/core/integrator.py) | Main orchestrator for text and image generation |
+| [core/image_types.py](../src/ai_integrator/core/image_types.py) | `ImageRequest`, `ImageResponse`, enums |
+| [core/validation.py](../src/ai_integrator/core/validation.py) | Config validation with actionable errors |
+| [core/provenance.py](../src/ai_integrator/core/provenance.py) | Audit trails, input hashing |
+| [coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py) | Guitar-specific prompt engineering |
+| [providers/toolbox_image_provider.py](../src/ai_integrator/providers/toolbox_image_provider.py) | HTTP adapter to luthiers-toolbox |
+| [providers/local_provider.py](../src/ai_integrator/providers/local_provider.py) | Ollama for local inference |
 
-**Config validation:**
+## Quick Examples
+
+**Text generation:**
 ```python
-from ai_integrator.core.validation import validate_config, ConfigValidationError
-result = validate_config(config_dict)
-if not result.valid:
-    for error in result.errors: print(f"ERROR: {error}")
+from ai_integrator import AIIntegrator
+from ai_integrator.providers import MockProvider
+
+integrator = AIIntegrator()
+integrator.add_provider("mock", MockProvider())
+response = await integrator.generate(prompt="Explain AI", model="mock-small")
+```
+
+**Image generation with coaching:**
+```python
+from ai_integrator import AIIntegrator, ImageCoach, DesignContext, GuitarComponent
+from ai_integrator.providers import ToolboxImageProvider
+
+coach = ImageCoach()
+context = DesignContext(guitar_type="classical", component=GuitarComponent.ROSETTE)
+request = coach.create_image_request(context, num_variations=4)
+
+integrator = AIIntegrator()
+integrator.add_image_provider("toolbox", ToolboxImageProvider())
+response = await integrator.generate_image(prompt=request.prompt, num_images=4)
 ```
 
 **Provenance tracking:**
 ```python
-from ai_integrator.core.provenance import create_provenance
-provenance = create_provenance(model_id="gpt-4", provider_name="OpenAI", input_content=prompt)
+from ai_integrator.core.provenance import create_provenance, hash_input_packet
+
+provenance = create_provenance(model_id="dall-e-3", provider_name="Toolbox", input_content=prompt)
+provenance.input_sha256 = hash_input_packet({"prompt": prompt, "context": context})
 response.metadata["provenance"] = provenance.to_dict()
 ```
 
-**Offline providers:**
-```python
-from ai_integrator.providers.local_provider import OllamaProvider
-provider = OllamaProvider(model_path="llama2")  # No api_key needed
-```
-
-See [docs/TECHNICAL_GUIDANCE_SUMMARY.md](../docs/TECHNICAL_GUIDANCE_SUMMARY.md) for full analysis and roadmap.
+See [docs/IMAGE_INTEGRATION_PLAN.md](../docs/IMAGE_INTEGRATION_PLAN.md) for full integration details.

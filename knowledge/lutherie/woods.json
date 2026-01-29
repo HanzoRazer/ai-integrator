@@ -1,0 +1,14 @@
+{
+  "woods": [
+    "spruce",
+    "cedar",
+    "mahogany",
+    "rosewood",
+    "maple",
+    "walnut",
+    "koa",
+    "ebony"
+  ],
+  "source": "C:\\Users\\thepr\\Downloads\\luthiers-toolbox\\services\\api\\app\\vision\\vocabulary.py",
+  "description": "Tonewood types for guitar construction"
+}

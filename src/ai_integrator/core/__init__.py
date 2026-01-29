@@ -11,8 +11,17 @@ from ai_integrator.core.base import (
     ModelNotFoundError,
 )
 from ai_integrator.core.integrator import AIIntegrator
+from ai_integrator.core.image_types import (
+    ImageSize,
+    ImageStyle,
+    ImageFormat,
+    ImageRequest,
+    ImageResponse,
+    GeneratedImage,
+)
 
 __all__ = [
+    # Text generation
     "BaseProvider",
     "AIResponse",
     "AIRequest",
@@ -22,4 +31,11 @@ __all__ = [
     "AuthenticationError",
     "RateLimitError",
     "ModelNotFoundError",
+    # Image generation
+    "ImageSize",
+    "ImageStyle",
+    "ImageFormat",
+    "ImageRequest",
+    "ImageResponse",
+    "GeneratedImage",
 ]

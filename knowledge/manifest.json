@@ -1,0 +1,40 @@
+{
+  "seeded_at": "2026-01-29T22:36:57.498682+00:00",
+  "source": "C:\\Users\\thepr\\Downloads\\luthiers-toolbox",
+  "files": {
+    "instruments": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\lutherie\\instruments.json",
+      "sha256": "f96cac3d0a159ebf",
+      "count": 20
+    },
+    "body_outlines": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\lutherie\\body_outlines.json",
+      "sha256": "40fd04b0e3d0451a",
+      "count": 16
+    },
+    "rosettes": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\patterns\\rosettes.json",
+      "sha256": "602894cdc2ac081f",
+      "count": 24
+    },
+    "woods": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\lutherie\\woods.json",
+      "sha256": "5bce45bd017ca8de",
+      "count": 8
+    },
+    "components": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\lutherie\\components.json",
+      "sha256": "fa03270e96987ab9"
+    },
+    "finishes": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\styles\\finishes.json",
+      "sha256": "1f6cb23d2a26931d",
+      "count": 8
+    },
+    "photography": {
+      "path": "C:\\Users\\thepr\\Downloads\\ai-integrator\\knowledge\\styles\\photography.json",
+      "sha256": "b445410894cc2f77",
+      "count": 7
+    }
+  }
+}
