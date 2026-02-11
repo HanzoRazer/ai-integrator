@@ -1,84 +1,139 @@
 # AI Integrator - Copilot Instructions
 
+## What This Is
+
+**ai-integrator** is a provider-agnostic AI orchestration layer. It abstracts text/image generation across multiple backends (OpenAI, Ollama, luthiers-toolbox) while tracking provenance for auditing.
+
+**Critical boundary:** This repo provides *untrusted capability*. Don't add governance logic, job envelopes, or policy enforcement—that belongs in upstream consumers like `sg-engine`.
+
 ## Ecosystem Context
 
-AI Integrator is a **provider-agnostic execution substrate** within a governed AI ecosystem:
-- `sg-spec` → contracts/schemas (truth layer)
-- `sg-coach` → deterministic rules (Mode 1, no AI)
-- `sg-ai` → advisory logic (offline, explain-only)
-- `ai-integrator` → model/provider abstraction (this repo)
-- `string-master` → domain theory
+ai-integrator sits within a governed AI ecosystem:
+
+| Repo | Role | Creates Truth? |
+|------|------|----------------|
+| `sg-spec` | Contracts/schemas (truth layer) | ✅ Definitions |
+| `sg-coach` | Deterministic rules (Mode 1, no AI) | ✅ Rule output |
+| `sg-engine` | Governed job executor | ✅ Validated drafts |
+| **`ai-integrator`** | **Model/provider abstraction** | ❌ Raw output only |
+| `luthiers-toolbox` | Persistence gate, UI review (RMOS) | ✅ Ledger artifacts |
 
 **Design philosophy:** Determinism first → contracts → offline AI → advisory only
 
-## Architectural Posture (Critical)
-
-**ai-integrator is infrastructure, NOT a governed job engine.**
-
-| Layer | Responsibility | Creates Truth? |
-|-------|---------------|----------------|
-| RMOS (ToolBox) | Persistence gate, UI review | ✅ Ledger artifacts |
-| sg-engine (sg-ai) | Governed job executor | ✅ Validated drafts |
-| ai-integrator | Provider abstraction | ❌ Raw model output only |
-
-**Boundary rule:** Do not add governance logic, job envelopes, or policy enforcement here. That belongs in `sg-engine`. This repo provides *untrusted capability* that higher layers validate.
-
-## Current Status: INTEGRATION READY
-
-**ai-integrator now has complete image generation support for luthiers-toolbox integration.**
-
-| Component | Status | Description |
-|-----------|--------|-------------|
-| Text generation | ✅ Ready | `AIIntegrator.generate()`, parallel execution |
-| Image generation | ✅ Ready | `AIIntegrator.generate_image()`, `ImageCoach` |
-| Toolbox adapter | ✅ Ready | `ToolboxImageProvider` controls luthiers-toolbox |
-| Provenance | ✅ Ready | Audit trails on every request |
-
-**Pending:** luthiers-toolbox endpoint (`/api/ai/image/generate`) to receive requests.
+This means: ai-integrator output is *advisory*. The governed layer (`sg-engine`) or RMOS validates before anything becomes truth.
 
 ## Architecture
 
-### Text Generation
-**Pattern:** `AIIntegrator` → `BaseProvider` → External/Local APIs
+```
+AIIntegrator (core/integrator.py)
+├── Text: add_provider() → BaseProvider → generate()
+└── Image: add_image_provider() → BaseImageProvider → generate_image()
+                                        ↓
+                              ImageCoach (prompt engineering)
+```
 
-- [core/integrator.py](../src/ai_integrator/core/integrator.py) - Orchestrator, provider registry, parallel execution
-- [core/base.py](../src/ai_integrator/core/base.py) - `BaseProvider` ABC, `AIRequest`/`AIResponse` dataclasses
-- [providers/](../src/ai_integrator/providers/) - `MockProvider`, `OpenAIProvider`, `OllamaProvider`
+| Layer | Key Files |
+|-------|-----------|
+| Orchestrator | [core/integrator.py](../src/ai_integrator/core/integrator.py) |
+| Text contracts | [core/base.py](../src/ai_integrator/core/base.py) (`AIRequest`, `AIResponse`) |
+| Image contracts | [core/image_types.py](../src/ai_integrator/core/image_types.py) (`ImageRequest`, `ImageResponse`) |
+| Design coaching | [coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py) |
+| Provenance | [core/provenance.py](../src/ai_integrator/core/provenance.py) |
 
-### Image Generation
-**Pattern:** `AIIntegrator` → `ImageCoach` → `BaseImageProvider` → luthiers-toolbox
+## Developer Workflows
 
-- [core/image_types.py](../src/ai_integrator/core/image_types.py) - `ImageRequest`, `ImageResponse`, `ImageSize`, `ImageStyle`
-- [providers/base_image_provider.py](../src/ai_integrator/providers/base_image_provider.py) - `BaseImageProvider` ABC
-- [providers/toolbox_image_provider.py](../src/ai_integrator/providers/toolbox_image_provider.py) - HTTP adapter to luthiers-toolbox
-- [coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py) - Guitar-specific prompt engineering
+```bash
+# Setup
+pip install -e ".[dev]"
 
-## Adding Text Providers
+# Test (152 tests, pytest-asyncio configured in conftest.py)
+pytest                          # All tests
+pytest tests/test_image_coach.py  # Single module
+pytest -k "test_rosette"        # Pattern match
 
-Extend `BaseProvider` and implement:
+# Format & lint
+black src/ tests/ --line-length 100
+isort src/ tests/
+flake8 src/ tests/ && mypy src/
+
+# Mock toolbox server for integration testing
+python tools/mock_toolbox_server.py  # Runs on http://localhost:8000
+```
+
+## Adding Providers
+
+**Text provider** (extend `BaseProvider`):
 ```python
 async def generate(self, request: AIRequest) -> AIResponse
 def get_available_models(self) -> List[str]
 @property def provider_name(self) -> str
 ```
 
-## Adding Image Providers
-
-Extend `BaseImageProvider` and implement:
+**Image provider** (extend `BaseImageProvider`):
 ```python
 async def generate_image(self, request: ImageRequest) -> ImageResponse
 def get_available_models(self) -> List[str]
 @property def provider_name(self) -> str
 ```
 
-**Required patterns:**
-- Lazy client init via `_get_client()` for optional dependencies
-- `AVAILABLE_MODELS` class constant for validation
-- Map errors to `ImageGenerationError`, `ContentPolicyError`, `ImageQuotaError`
-- Include provenance in response metadata
+Required patterns for providers:
+- Lazy client init via `_get_client()` for optional dependencies (see [toolbox_image_provider.py](../src/ai_integrator/providers/toolbox_image_provider.py#L60))
+- `AVAILABLE_MODELS` class constant
+- Map errors to typed exceptions: `ImageGenerationError`, `ContentPolicyError`, `ImageQuotaError`
 
-## Image Coach Usage
+## Key Patterns
 
+**Async everywhere:** All `generate()` methods are async—always `await`.
+
+**First provider = default:** The first added provider becomes default. Override with `set_default_provider()`.
+
+**Parallel execution returns exceptions as values:**
+```python
+results = await integrator.generate_parallel(prompt, configs)
+for name, result in results.items():
+    if isinstance(result, Exception):
+        handle_error(result)
+```
+
+**Provenance on every request:**
+```python
+from ai_integrator.core.provenance import create_provenance, hash_input_packet
+provenance = create_provenance(model_id="gpt-4", provider_name="OpenAI", input_content=prompt)
+provenance.input_sha256 = hash_input_packet({"prompt": prompt})
+response.metadata["provenance"] = provenance.to_dict()
+```
+
+## Testing Patterns
+
+Use `MockProvider` and `MockImageProvider` for tests—no external calls:
+```python
+integrator = AIIntegrator()
+integrator.add_provider("mock", MockProvider())
+integrator.add_image_provider("mock", MockImageProvider())
+```
+
+## ImageCoach Prompt Engineering
+
+`ImageCoach` ([coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py)) provides guitar-specific prompt engineering. It translates `DesignContext` into optimized image generation prompts.
+
+**Component templates** (`COMPONENT_TEMPLATES` dict):
+- `ROSETTE` → centered composition, wood grain texture, studio lighting
+- `HEADSTOCK` → tuning machines, logo area, product photography
+- `BRIDGE` → saddle/pin placement, macro photography
+- `BODY` → top view, bracing visible, studio lighting
+- `SOUNDHOLE` → shallow depth of field, artistic macro
+- `BINDING` → purfling detail, close-up craftsmanship
+- `INLAY` → mother of pearl/abalone, fretboard detail
+- `FULL_GUITAR` → three-quarter angle, soft shadows
+
+**Wood descriptions** (`WOOD_DESCRIPTIONS` dict):
+```python
+WoodType.SPRUCE → "light-colored Sitka spruce top with subtle straight grain patterns"
+WoodType.ROSEWOOD → "dark East Indian rosewood with dramatic grain figuring and purple hues"
+WoodType.KOA → "Hawaiian koa with golden brown swirls and chatoyant figure"
+```
+
+**Usage pattern:**
 ```python
 from ai_integrator import ImageCoach, DesignContext, GuitarComponent, WoodType
 
@@ -87,99 +142,44 @@ context = DesignContext(
     guitar_type="classical",
     component=GuitarComponent.ROSETTE,
     wood_type=WoodType.SPRUCE,
+    style_era=StyleEra.TRADITIONAL,
 )
 request = coach.create_image_request(context, num_variations=4)
-# request.prompt is now optimized for guitar imagery
+# request.prompt now contains optimized, guitar-specific language
+```
+
+**Extending templates:** Pass `custom_templates` to `ImageCoach.__init__()` to override specific components.
+
+## Knowledge Base
+
+Guitar/lutherie domain data lives in `knowledge/` (seeded from luthiers-toolbox via `python tools/seed_knowledge_base.py`):
+
+| File | Content | Used For |
+|------|---------|----------|
+| `lutherie/woods.json` | Tonewood types (spruce, cedar, etc.) | Vocabulary reference |
+| `lutherie/instruments.json` | 20 instrument models with geometry | Model lookups |
+| `patterns/rosettes.json` | 24 rosette patterns with dimensions | Pattern selection |
+| `styles/finishes.json` | Finish types and descriptions | Prompt styling |
+
+**Current usage:** `ImageCoach` uses hardcoded enums (`WoodType`, `GuitarComponent`) that mirror this data. The JSON files serve as:
+1. **Ground truth sync** with luthiers-toolbox vocabulary
+2. **Future expansion** for dynamic prompt building
+3. **Reference** for agents extending coaching logic
+
+**To reseed** after luthiers-toolbox updates:
+```bash
+python tools/seed_knowledge_base.py --toolbox-path ../luthiers-toolbox
 ```
 
 ## Exception Hierarchy
 
 ```
-ProviderError (base)
-├── AuthenticationError    # Invalid credentials
-├── RateLimitError         # Throttling
-├── ModelNotFoundError     # Unknown model
+ProviderError
+├── AuthenticationError
+├── RateLimitError
+├── ModelNotFoundError
 └── ImageProviderError
-    ├── ImageGenerationError  # Generation failed
-    ├── ContentPolicyError    # Safety violation
-    └── ImageQuotaError       # Quota exceeded
+    ├── ImageGenerationError
+    ├── ContentPolicyError
+    └── ImageQuotaError
 ```
-
-## Testing
-
-Use `MockProvider` for text and `MockImageProvider` for images:
-```python
-# Text generation
-integrator.add_provider("mock", MockProvider())
-response = await integrator.generate(prompt="test", model="mock-small")
-
-# Image generation
-integrator.add_image_provider("mock", MockImageProvider())
-response = await integrator.generate_image(prompt="guitar rosette")
-```
-
-Run: `pytest` (152 tests, pytest-asyncio handles async)
-
-## Code Style
-
-- **Format:** `black src/ tests/` (line-length 100), `isort`
-- **Lint:** `flake8 src/ tests/ && mypy src/`
-- **Types:** Required on public functions; package is `py.typed`
-- **Docs:** Google-style docstrings with Args/Returns
-
-## Critical Design Notes
-
-1. **Async-first:** All `generate()` and `generate_image()` methods are async—always `await`
-2. **First provider = default:** Override with `set_default_provider()` or `set_default_image_provider()`
-3. **Parallel methods return exceptions as values**—callers must type-check results
-4. **Provenance tracking:** Use `create_provenance()` and attach to response metadata
-5. **ImageCoach provides PARAMETERS only:** RMOS accepts/rejects design suggestions
-
-## Key Modules
-
-| Module | Purpose |
-|--------|---------|
-| [core/integrator.py](../src/ai_integrator/core/integrator.py) | Main orchestrator for text and image generation |
-| [core/image_types.py](../src/ai_integrator/core/image_types.py) | `ImageRequest`, `ImageResponse`, enums |
-| [core/validation.py](../src/ai_integrator/core/validation.py) | Config validation with actionable errors |
-| [core/provenance.py](../src/ai_integrator/core/provenance.py) | Audit trails, input hashing |
-| [coaching/image_coach.py](../src/ai_integrator/coaching/image_coach.py) | Guitar-specific prompt engineering |
-| [providers/toolbox_image_provider.py](../src/ai_integrator/providers/toolbox_image_provider.py) | HTTP adapter to luthiers-toolbox |
-| [providers/local_provider.py](../src/ai_integrator/providers/local_provider.py) | Ollama for local inference |
-
-## Quick Examples
-
-**Text generation:**
-```python
-from ai_integrator import AIIntegrator
-from ai_integrator.providers import MockProvider
-
-integrator = AIIntegrator()
-integrator.add_provider("mock", MockProvider())
-response = await integrator.generate(prompt="Explain AI", model="mock-small")
-```
-
-**Image generation with coaching:**
-```python
-from ai_integrator import AIIntegrator, ImageCoach, DesignContext, GuitarComponent
-from ai_integrator.providers import ToolboxImageProvider
-
-coach = ImageCoach()
-context = DesignContext(guitar_type="classical", component=GuitarComponent.ROSETTE)
-request = coach.create_image_request(context, num_variations=4)
-
-integrator = AIIntegrator()
-integrator.add_image_provider("toolbox", ToolboxImageProvider())
-response = await integrator.generate_image(prompt=request.prompt, num_images=4)
-```
-
-**Provenance tracking:**
-```python
-from ai_integrator.core.provenance import create_provenance, hash_input_packet
-
-provenance = create_provenance(model_id="dall-e-3", provider_name="Toolbox", input_content=prompt)
-provenance.input_sha256 = hash_input_packet({"prompt": prompt, "context": context})
-response.metadata["provenance"] = provenance.to_dict()
-```
-
-See [docs/IMAGE_INTEGRATION_PLAN.md](../docs/IMAGE_INTEGRATION_PLAN.md) for full integration details.
